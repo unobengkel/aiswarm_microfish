@@ -50,16 +50,24 @@
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0.5rem; }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-200 min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden md:overflow-hidden relative">
+<body class="bg-gray-950 text-gray-200 h-screen flex flex-col md:flex-row font-sans overflow-hidden relative">
 
     <!-- TOAST NOTIFICATION CONTAINER -->
-    <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none border-0"></div>
 
-    <!-- PANEL KONTROL & KANVAS -->
-    <div class="w-full md:w-[350px] lg:w-[400px] bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col p-4 shadow-xl z-10 flex-shrink-0 overflow-y-auto">
-        <div class="mb-4">
-            <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">MiroFish V2</h1>
-            <p class="text-xs text-gray-400 mt-1">Simulasi Swarm AI Dinamis</p>
+    <!-- OVERLAY SIDEBAR (Mobile Only) -->
+    <div id="sidebarOverlay" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none md:hidden" onclick="toggleSidebar(false)"></div>
+
+    <!-- PANEL KONTROL & KANVAS (Sidebar Drawer) -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[300px] sm:w-[350px] bg-gray-900 border-r border-gray-800 flex flex-col p-4 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex md:w-[350px] lg:w-[400px] flex-shrink-0 overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">MiroFish V3</h1>
+                <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">Simulasi Swarm AI</p>
+            </div>
+            <button onclick="toggleSidebar(false)" class="md:hidden text-gray-400 hover:text-white p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
 
         <div class="space-y-3 mb-4 flex-grow-0" id="setupPanel">
@@ -125,9 +133,18 @@
     </div>
 
     <!-- PANEL CHAT -->
-    <div class="flex-1 flex flex-col bg-gray-950 relative h-[60vh] md:h-full">
-        <div class="h-12 md:h-14 border-b border-gray-800 flex items-center justify-between px-4 md:px-6 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
-            <h2 class="text-sm font-semibold text-gray-300">Log Diskusi Swarm</h2>
+    <div class="flex-1 flex flex-col bg-gray-950 relative min-w-0 h-full">
+        <!-- Header Chat Mobile Friendly -->
+        <div class="h-14 md:h-16 border-b border-gray-800 flex items-center justify-between px-4 md:px-6 bg-gray-900/80 backdrop-blur-md sticky top-0 z-30">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar(true)" class="md:hidden text-gray-400 hover:text-white p-2 -ml-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div>
+                    <h2 class="text-sm md:text-base font-bold text-gray-200">Diskusi Swarm</h2>
+                    <p class="text-[10px] text-gray-500 hidden sm:block">AI Multi-Agent Simulation</p>
+                </div>
+            </div>
             <div id="statusBadge" class="flex items-center gap-2 text-xs font-medium text-gray-400 bg-gray-800/50 px-2 md:px-3 py-1 rounded-full border border-gray-700/50">
                 <span class="w-2 h-2 rounded-full bg-gray-600" id="statusDot"></span>
                 <span id="statusText" class="truncate max-w-[120px] md:max-w-xs">Standby</span>
@@ -135,12 +152,12 @@
         </div>
 
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth pb-32">
-            <div class="flex items-start gap-3 md:gap-4">
-                <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 flex-shrink-0 text-sm">🤖</div>
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl rounded-tl-none p-3 md:p-4 max-w-[90%] md:max-w-[80%] text-sm text-gray-300 shadow-sm markdown-body">
-                    <p>Halo, <strong>Moderator</strong>! MiroFish V2 siap digunakan.</p>
-                    <p>Sekarang Anda dapat <strong>mengatur agen AI</strong> secara dinamis. Tambahkan agen dengan peran dan karakter berbeda melalui tombol kelola di panel kiri.</p>
-                    <p><em>Info Pembaruan:</em> Tersedia 2 jenis opsi Export/Import: Menggunakan <strong>File JSON</strong> atau <strong>Salin/Paste Teks</strong> (jika File diblokir browser).</p>
+            <!-- Pesan Pembuka -->
+            <div class="flex items-start gap-3 md:gap-4 msg-animate">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 flex-shrink-0 text-sm">🤖</div>
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl rounded-tl-none p-3 md:p-4 max-w-[90%] md:max-w-[80%] text-[13px] md:text-sm text-gray-300 shadow-sm markdown-body">
+                    <p>Halo, <strong>Moderator</strong>! MiroFish V3 siap digunakan.</p>
+                    <p>Sekarang Anda dapat <strong>mengatur agen AI</strong> secara dinamis. Tambahkan agen dengan peran dan karakter berbeda melalui tombol <strong>Menu (Garis Tiga)</strong>.</p>
                 </div>
             </div>
         </div>
@@ -1102,7 +1119,7 @@ Gunakan format markdown. Balasanmu harus tajam, singkat (1-2 paragraf pendek mak
             ui.exportTextBtn.disabled = true; ui.importTextBtn.disabled = true;
             
             if(window.innerWidth < 768) {
-                window.scrollTo({ top: document.querySelector('.bg-gray-950.relative').offsetTop, behavior: 'smooth'});
+                toggleSidebar(false);
             }
 
             setTimeout(simulationLoop, 1500);
@@ -1173,6 +1190,22 @@ Gunakan format markdown. Balasanmu harus tajam, singkat (1-2 paragraf pendek mak
                 showToast("Suara Agen Dimatikan", "info");
             }
         });
+
+        // 8. SIDEBAR INTERACTIVITY
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        window.toggleSidebar = function(isOpen) {
+            if (isOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('pointer-events-none');
+                overlay.classList.add('opacity-100');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('pointer-events-none');
+                overlay.classList.remove('opacity-100');
+            }
+        };
 
         // Initialize on load
         window.onload = () => {
