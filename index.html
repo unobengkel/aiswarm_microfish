@@ -50,7 +50,7 @@
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0.5rem; }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-200 h-screen h-[100dvh] flex flex-col md:flex-row font-sans overflow-hidden relative">
+<body class="bg-gray-950 text-gray-200 fixed inset-0 flex flex-col md:flex-row font-sans overflow-hidden">
 
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none border-0"></div>
@@ -59,7 +59,7 @@
     <div id="sidebarOverlay" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none md:hidden" onclick="toggleSidebar(false)"></div>
 
     <!-- PANEL KONTROL & KANVAS (Sidebar Drawer) -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[300px] sm:w-[350px] bg-gray-900 border-r border-gray-800 flex flex-col p-4 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex md:w-[350px] lg:w-[400px] flex-shrink-0 h-screen h-[100dvh] md:h-auto overflow-y-auto">
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[300px] sm:w-[350px] bg-gray-900 border-r border-gray-800 flex flex-col p-4 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex md:w-[350px] lg:w-[400px] flex-shrink-0 h-full overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">MiroFish V3</h1>
@@ -133,7 +133,7 @@
     </div>
 
     <!-- PANEL CHAT -->
-    <div class="flex-1 flex flex-col bg-gray-950 relative min-w-0 min-h-0">
+    <div class="flex-1 flex flex-col bg-gray-950 relative min-w-0 min-h-0 h-full">
         <!-- Header Chat Mobile Friendly -->
         <div class="h-14 md:h-16 border-b border-gray-800 flex items-center justify-between px-4 md:px-6 bg-gray-900/80 backdrop-blur-md sticky top-0 z-30">
             <div class="flex items-center gap-3">
@@ -180,7 +180,8 @@
                 <textarea 
                     id="moderatorInput" rows="1" disabled placeholder="Tunggu giliranmu untuk bicara..." 
                     class="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-12 py-3 md:py-4 text-sm text-gray-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    style="min-height: 44px; max-height: 120px; overflow-y: auto;"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-12 py-3 md:py-4 text-sm text-gray-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    style="min-height: 44px; max-height: 100px; overflow-y: auto;"
                 ></textarea>
                 <button type="submit" id="sendBtn" disabled class="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg transition-colors flex items-center justify-center active:scale-95">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 transform rotate-90" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
