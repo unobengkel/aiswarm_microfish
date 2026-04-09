@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiroFish Lite V2 - Simulasi AI Agent Dinamis</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js & DOMPurify -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <style>
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px; height: 6px; background-color: currentColor;
+            border-radius: 50%; margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+        .markdown-body { line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word; }
+        .markdown-body p { margin-bottom: 0.75rem; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body strong { font-weight: 600; color: #f3f4f6; }
+        .markdown-body em { font-style: italic; color: #d1d5db; }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-body ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-body li { margin-bottom: 0.25rem; }
+        .markdown-body code { background-color: #374151; padding: 0.15rem 0.3rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85em; color: #fbbf24; }
+        .markdown-body pre { background-color: #111827; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid #374151; }
+        .markdown-body pre code { background-color: transparent; padding: 0; color: #e5e7eb; font-size: 0.85em; }
+        .markdown-body blockquote { border-left: 3px solid #4b5563; padding-left: 1rem; color: #9ca3af; font-style: italic; margin-bottom: 0.75rem; }
+
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-animate { animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        @keyframes toastSlide { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-animate { animation: toastSlide 0.3s ease-out forwards; }
+
+        /* Custom color picker style */
+        input[type="color"] { -webkit-appearance: none; border: none; padding: 0; width: 100%; height: 100%; cursor: pointer; border-radius: 0.5rem;}
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-200 min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden md:overflow-hidden relative">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- PANEL KONTROL & KANVAS -->
+    <div class="w-full md:w-[350px] lg:w-[400px] bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col p-4 shadow-xl z-10 flex-shrink-0 overflow-y-auto">
+        <div class="mb-4">
+            <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">MiroFish V2</h1>
+            <p class="text-xs text-gray-400 mt-1">Simulasi Swarm AI Dinamis</p>
+        </div>
+
+        <div class="space-y-3 mb-4 flex-grow-0" id="setupPanel">
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">VPS Backend URL <span class="text-[10px] text-gray-500">(Alamat Server)</span></label>
+                <input type="text" id="backendUrlInput" placeholder="http://103.xx.xx.xx:8000" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+            </div>
+            
+            <button id="manageAgentsBtn" class="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-between">
+                <span>🤖 Kelola Agen AI</span>
+                <span id="agentCountBadge" class="bg-gray-700 px-2 py-0.5 rounded-full text-[10px]">3 Agen</span>
+            </button>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1 mt-2">Topik Awal Simulasi</label>
+                <textarea id="topicInput" rows="3" placeholder="Masukkan topik untuk didiskusikan oleh agen..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"></textarea>
+            </div>
+            
+            <div class="flex gap-2 pt-1">
+                <button id="startBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-lg shadow-blue-900/20 active:scale-95">Mulai Sesi</button>
+                <button id="stopBtn" disabled class="flex-1 bg-red-600 hover:bg-red-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 active:scale-95 hidden">Akhiri Sesi</button>
+            </div>
+
+            <!-- Fitur Tambahan V3 -->
+            <div class="bg-gray-800/50 p-3 rounded-lg border border-gray-700 mt-2">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-semibold text-gray-300">🔊 Aktifkan Suara Agen</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="voiceToggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                <div id="voiceStatus" class="text-[10px] text-gray-500 italic">Bahasa Indonesia (Pilih suara di tablet Anda)</div>
+            </div>
+
+            <!-- Export Import Tools CHAT -->
+            <div class="mt-3 pt-3 border-t border-gray-800">
+                <p class="text-[10px] text-gray-400 mb-2 leading-tight">
+                    <span class="text-yellow-500">⚠️</span> <strong class="text-gray-300">Tips:</strong> Jika opsi File gagal diproses (diblokir browser), gunakan opsi Teks (Salin/Paste).
+                </p>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <button id="exportFileBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-[11px] font-medium py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export File</button>
+                    <button id="importFileBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-[11px] font-medium py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> Import File</button>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="exportTextBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-[11px] font-medium py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Salin Teks</button>
+                    <button id="importTextBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-[11px] font-medium py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> Paste Teks</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Visualisasi Arena -->
+        <div class="relative h-[200px] md:min-h-[250px] md:flex-grow rounded-xl overflow-hidden border border-gray-700 bg-gray-950 mt-2 shadow-inner">
+            <div class="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-mono text-gray-500 z-10 pointer-events-none">Arena Simulasi</div>
+            <canvas id="agentCanvas" class="w-full h-full block touch-none"></canvas>
+            
+            <!-- Legenda Agent Dinamis -->
+            <div id="canvasLegend" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-wrap justify-center gap-2 text-[9px] sm:text-[10px] bg-gray-900/80 backdrop-blur-sm rounded-lg py-1 px-2 border border-gray-700/50 w-[90%] pointer-events-none max-h-16 overflow-hidden">
+                <!-- Diisi via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL CHAT -->
+    <div class="flex-1 flex flex-col bg-gray-950 relative h-[60vh] md:h-full">
+        <div class="h-12 md:h-14 border-b border-gray-800 flex items-center justify-between px-4 md:px-6 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
+            <h2 class="text-sm font-semibold text-gray-300">Log Diskusi Swarm</h2>
+            <div id="statusBadge" class="flex items-center gap-2 text-xs font-medium text-gray-400 bg-gray-800/50 px-2 md:px-3 py-1 rounded-full border border-gray-700/50">
+                <span class="w-2 h-2 rounded-full bg-gray-600" id="statusDot"></span>
+                <span id="statusText" class="truncate max-w-[120px] md:max-w-xs">Standby</span>
+            </div>
+        </div>
+
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth pb-32">
+            <div class="flex items-start gap-3 md:gap-4">
+                <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 flex-shrink-0 text-sm">🤖</div>
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl rounded-tl-none p-3 md:p-4 max-w-[90%] md:max-w-[80%] text-sm text-gray-300 shadow-sm markdown-body">
+                    <p>Halo, <strong>Moderator</strong>! MiroFish V2 siap digunakan.</p>
+                    <p>Sekarang Anda dapat <strong>mengatur agen AI</strong> secara dinamis. Tambahkan agen dengan peran dan karakter berbeda melalui tombol kelola di panel kiri.</p>
+                    <p><em>Info Pembaruan:</em> Tersedia 2 jenis opsi Export/Import: Menggunakan <strong>File JSON</strong> atau <strong>Salin/Paste Teks</strong> (jika File diblokir browser).</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Typig Indicator -->
+        <div id="typingIndicator" class="hidden absolute bottom-[72px] md:bottom-[88px] left-0 right-0 p-2 md:p-3 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent z-10 pointer-events-none">
+            <div class="flex items-center gap-3 text-xs md:text-sm text-gray-300 mx-auto max-w-3xl px-4">
+                <div id="typingAvatar" class="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-xs border border-gray-700 flex-shrink-0"></div>
+                <div class="flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-800">
+                    <span id="typingName" class="font-medium">Agen</span> 
+                    <span class="text-gray-400">sedang menganalisis</span>
+                    <div class="typing-indicator text-blue-500 ml-1"><span></span><span></span><span></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-3 md:p-4 border-t border-gray-800 bg-gray-900 z-20 flex-shrink-0">
+            <form id="moderatorForm" class="flex gap-2 max-w-4xl mx-auto relative">
+                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none filter drop-shadow-sm opacity-80" id="modIcon">👑</div>
+                <textarea 
+                    id="moderatorInput" rows="1" disabled placeholder="Tunggu giliranmu untuk bicara..." 
+                    class="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-12 py-3 md:py-4 text-sm text-gray-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    style="min-height: 44px; max-height: 120px; overflow-y: auto;"
+                ></textarea>
+                <button type="submit" id="sendBtn" disabled class="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg transition-colors flex items-center justify-center active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 transform rotate-90" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL KELOLA AGEN -->
+    <div id="agentModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-xl">
+                <h3 class="font-bold text-lg text-gray-200">Manajemen Agen AI</h3>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-white p-1">&times;</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- List Agent -->
+                <div>
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-4 gap-3">
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Daftar Agen Saat Ini</h4>
+                        
+                        <!-- Tools Export Import AGEN -->
+                        <div class="flex flex-col items-start sm:items-end gap-1">
+                            <span class="text-[9px] text-gray-500 hidden sm:inline-block"><span class="text-yellow-500">⚠️</span> Jika File gagal, gunakan Teks.</span>
+                            <div class="flex gap-2">
+                                <div class="flex gap-1 bg-gray-800 p-1 rounded-lg border border-gray-700">
+                                    <button id="exportAgentFileBtn" class="hover:bg-gray-700 text-gray-300 text-[10px] font-medium py-1 px-2 rounded transition-colors">💾 File</button>
+                                    <button id="importAgentFileBtn" class="hover:bg-gray-700 text-gray-300 text-[10px] font-medium py-1 px-2 rounded transition-colors">📂 File</button>
+                                    <input type="file" id="importAgentFileInput" accept=".json" class="hidden">
+                                </div>
+                                <div class="flex gap-1 bg-gray-800 p-1 rounded-lg border border-gray-700">
+                                    <button id="exportAgentTextBtn" class="hover:bg-gray-700 text-gray-300 text-[10px] font-medium py-1 px-2 rounded transition-colors">📋 Teks</button>
+                                    <button id="importAgentTextBtn" class="hover:bg-gray-700 text-gray-300 text-[10px] font-medium py-1 px-2 rounded transition-colors">📝 Teks</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="agentList" class="space-y-2">
+                        <!-- Render via JS -->
+                    </div>
+                </div>
+
+                <hr class="border-gray-800">
+
+                <!-- Form Tambah Agent -->
+                <div class="bg-gray-950 p-4 rounded-lg border border-gray-800">
+                    <h4 class="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2"><span>➕</span> Tambah Agen Baru</h4>
+                    <form id="addAgentForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="col-span-1 md:col-span-2 flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-[11px] text-gray-400 mb-1">Nama Agen</label>
+                                <input type="text" id="newAgentName" required placeholder="Contoh: Budi" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div class="w-16">
+                                <label class="block text-[11px] text-gray-400 mb-1">Ikon</label>
+                                <input type="text" id="newAgentIcon" required placeholder="😎" value="🤖" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div class="w-16">
+                                <label class="block text-[11px] text-gray-400 mb-1">Warna</label>
+                                <div class="h-[38px] w-full rounded-lg border border-gray-700 overflow-hidden bg-gray-800">
+                                    <input type="color" id="newAgentColor" value="#3b82f6">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-[11px] text-gray-400 mb-1">Peran / Keahlian</label>
+                            <input type="text" id="newAgentRole" required placeholder="Contoh: Ahli Ekonomi" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-[11px] text-gray-400 mb-1">Karakter / Sifat</label>
+                            <input type="text" id="newAgentChar" required placeholder="Contoh: Egois, Pemarah" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-[11px] text-gray-400 mb-1">Fokus Utama / Pendirian (Agar tidak mudah goyah)</label>
+                            <input type="text" id="newAgentFocus" placeholder="Contoh: Mengutamakan efisiensi biaya / Keamanan data" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="col-span-1 md:col-span-2 pt-2">
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">Simpan Agen Baru</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA MODAL FOR TEXT EXPORT/IMPORT (Bypass Iframe Restrictions) -->
+    <div id="dataModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-2xl flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-xl">
+                <h3 id="dataModalTitle" class="font-bold text-lg text-gray-200">Export / Import Data</h3>
+                <button id="closeDataModalBtn" class="text-gray-400 hover:text-white p-1">&times;</button>
+            </div>
+            <div class="p-4 flex flex-col gap-3">
+                <p id="dataModalDesc" class="text-xs text-gray-400">Salin teks di bawah ini untuk menyimpan, atau tempel (paste) data JSON untuk mengimpor.</p>
+                <textarea id="dataTextarea" class="w-full h-64 bg-gray-950 border border-gray-700 rounded-lg p-3 text-xs text-green-400 font-mono focus:outline-none focus:border-blue-500" spellcheck="false"></textarea>
+                
+                <!-- Opsi Import Agen untuk Mode Teks -->
+                <div id="importAgentOptions" class="hidden flex gap-4 text-sm mt-1">
+                    <label class="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+                        <input type="radio" name="agentImportType" value="replace" checked class="accent-blue-500"> Timpa & Hapus yang Lama
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+                        <input type="radio" name="agentImportType" value="append" class="accent-blue-500"> Gabung dengan yang Ada
+                    </label>
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button id="copyDataBtn" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors hidden">Salin ke Clipboard</button>
+                    <button id="processImportBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors hidden">Proses Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILE CONFIRM MODAL (Untuk Import File Agen) -->
+    <div id="confirmFileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-700 rounded-xl p-5 max-w-sm w-full shadow-2xl">
+            <h3 class="font-bold text-gray-200 mb-2">Import Agen dari File</h3>
+            <p class="text-sm text-gray-400 mb-4">Bagaimana Anda ingin mengimpor agen ini?</p>
+            <div class="flex flex-col gap-2">
+                <button id="btnConfirmReplace" class="bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-sm transition-colors">Ganti Semua Agen Saat Ini</button>
+                <button id="btnConfirmAppend" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-sm transition-colors">Gabungkan ke Daftar Saat Ini</button>
+                <button id="btnConfirmCancel" class="bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg text-sm mt-2 transition-colors">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 0. TOAST NOTIFICATION SYSTEM
+        // ==========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-blue-600';
+            if(type === 'error') bg = 'bg-red-600';
+            if(type === 'success') bg = 'bg-emerald-600';
+
+            toast.className = `flex items-center gap-2 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${bg} toast-animate`;
+            toast.innerHTML = `<span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // ==========================================
+        // 0.1 TEXT TO SPEECH SYSTEM (V3)
+        // ==========================================
+        const synth = window.speechSynthesis;
+        let voices = [];
+
+        function loadVoices() {
+            voices = synth.getVoices();
+        }
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function speak(text, agent) {
+            if (!state.isVoiceEnabled || !synth) return;
+            
+            // Bersihkan teks dari markdown dan tag mood untuk dibaca
+            const cleanText = text.replace(/\[\[MOOD:.*?\]\]/g, '').replace(/[#*`_]/g, '');
+            
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            
+            // Cari suara Indonesia (id-ID)
+            const idVoice = voices.find(v => v.lang.includes('id-ID') || v.lang.includes('id_ID'));
+            if (idVoice) utterance.voice = idVoice;
+
+            // Karakter suara berbeda via Pitch & Rate
+            // Menggunakan hash dari ID agen untuk konsistensi suara agen yang sama
+            let hash = 0;
+            for (let i = 0; i < agent.id.length; i++) hash = agent.id.charCodeAt(i) + ((hash << 5) - hash);
+            
+            utterance.pitch = 0.8 + (Math.abs(hash % 7) / 10); // 0.8 to 1.4
+            utterance.rate = 0.9 + (Math.abs(hash % 4) / 10);  // 0.9 to 1.2
+            
+            synth.speak(utterance);
+        }
+
+        // ==========================================
+        // 1. STATE & STORAGE MANAGEMENT
+        // ==========================================
+        const STORAGE_KEY = 'mirofish_v2_data';
+
+        const defaultAgents = [
+            { id: 'agent_' + Date.now() + 1, name: 'Optima', role: 'Inovator & Optimis', character: 'Optimis, visioner, mencari solusi', focus: 'Selalu melihat peluang dari sisi kemajuan teknologi', color: '#34d399', icon: '💡' },
+            { id: 'agent_' + Date.now() + 2, name: 'Skeptis', role: 'Kritikus Realistis', character: 'Kritis, analitis, mencari celah negatif', focus: 'Memastikan risiko dan keamanan adalah prioritas utama', color: '#fb7185', icon: '🕵️' },
+            { id: 'agent_' + Date.now() + 3, name: 'Analytica', role: 'Penengah & Analis', character: 'Rasional, objektif, penengah berdasarkan data', focus: 'Berpegang teguh pada fakta angka dan efisiensi', color: '#60a5fa', icon: '⚖️' }
+        ];
+
+        const moderator = { id: 'mod_user', name: 'Moderator', role: 'Pemimpin Diskusi', color: '#a855f7', icon: '👑' };
+
+        let state = {
+            isRunning: false,
+            backendUrl: 'http://localhost:8000',
+            currentTopic: '',
+            turnIndex: 0, 
+            discussionHistory: [],
+            speakingAgentId: null,
+            speakingAgentMood: 'Normal', // BARU V3
+            isModeratorTurn: false,
+            isVoiceEnabled: false, 
+            agents: []
+        };
+
+        const ui = {
+            backendUrl: document.getElementById('backendUrlInput'),
+            topic: document.getElementById('topicInput'),
+            startBtn: document.getElementById('startBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            chatContainer: document.getElementById('chatContainer'),
+            typingIndicator: document.getElementById('typingIndicator'),
+            typingAvatar: document.getElementById('typingAvatar'),
+            typingName: document.getElementById('typingName'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            modInput: document.getElementById('moderatorInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            modForm: document.getElementById('moderatorForm'),
+            modIcon: document.getElementById('modIcon'),
+            
+            // Modal Elements
+            manageAgentsBtn: document.getElementById('manageAgentsBtn'),
+            agentCountBadge: document.getElementById('agentCountBadge'),
+            agentModal: document.getElementById('agentModal'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            agentList: document.getElementById('agentList'),
+            addAgentForm: document.getElementById('addAgentForm'),
+
+            // Data Modal UI (Text Import/Export)
+            dataModal: document.getElementById('dataModal'),
+            dataModalTitle: document.getElementById('dataModalTitle'),
+            dataModalDesc: document.getElementById('dataModalDesc'),
+            dataTextarea: document.getElementById('dataTextarea'),
+            closeDataModalBtn: document.getElementById('closeDataModalBtn'),
+            copyDataBtn: document.getElementById('copyDataBtn'),
+            processImportBtn: document.getElementById('processImportBtn'),
+            importAgentOptions: document.getElementById('importAgentOptions'),
+
+            // File Confirm Modal UI
+            confirmFileModal: document.getElementById('confirmFileModal'),
+            btnConfirmReplace: document.getElementById('btnConfirmReplace'),
+            btnConfirmAppend: document.getElementById('btnConfirmAppend'),
+            btnConfirmCancel: document.getElementById('btnConfirmCancel'),
+
+            // Chat Buttons
+            exportFileBtn: document.getElementById('exportFileBtn'),
+            importFileBtn: document.getElementById('importFileBtn'),
+            importFileInput: document.getElementById('importFileInput'),
+            exportTextBtn: document.getElementById('exportTextBtn'),
+            importTextBtn: document.getElementById('importTextBtn'),
+
+            // Agent Buttons
+            exportAgentFileBtn: document.getElementById('exportAgentFileBtn'),
+            importAgentFileBtn: document.getElementById('importAgentFileBtn'),
+            importAgentFileInput: document.getElementById('importAgentFileInput'),
+            exportAgentTextBtn: document.getElementById('exportAgentTextBtn'),
+            importAgentTextBtn: document.getElementById('importAgentTextBtn'),
+
+            // V3 Elements
+            voiceToggle: document.getElementById('voiceToggle')
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state.agents = parsed.agents && parsed.agents.length > 0 ? parsed.agents : [...defaultAgents];
+                    // V3.1: Deteksi otomatis IP jika input kosong
+                    ui.backendUrl.value = parsed.backendUrl || window.location.origin;
+                } catch (e) {
+                    state.agents = [...defaultAgents];
+                }
+            } else {
+                state.agents = [...defaultAgents];
+                // V3.1: Set default ke IP saat ini jika baru pertama kali buka
+                ui.backendUrl.value = window.location.origin;
+            }
+            updateAgentBadge();
+            renderAgentList();
+            updateLegend();
+            initCanvas();
+        }
+
+        function saveData() {
+            state.backendUrl = ui.backendUrl.value.trim();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                backendUrl: state.backendUrl,
+                agents: state.agents
+            }));
+        }
+
+        ui.backendUrl.addEventListener('blur', saveData);
+
+        // ==========================================
+        // 2. MODAL & AGENT MANAGEMENT
+        // ==========================================
+        
+        function updateAgentBadge() {
+            ui.agentCountBadge.textContent = `${state.agents.length} Agen`;
+        }
+
+        function generatePrompt(agent) {
+            return `Kamu adalah AI bernama ${agent.name}. 
+Peran atau keahlianmu adalah: ${agent.role}. 
+Karakter, sifat, atau nada bicaramu adalah: ${agent.character}. 
+Fokus Utama & Pendirianmu: ${agent.focus || 'Tetap objektif'}. (PENTING: Jangan mudah goyah dari fokus ini selama diskusi).
+Penting: Selalu balas sesuai dengan karaktermu.
+PENTING Tambahan V3: Di awal jawabanmu, WAJIB sertakan mood atau emosimu dalam kurung siku ganda, pilih salah satu: [[MOOD:Normal]], [[MOOD:Senang]], [[MOOD:Marah]], [[MOOD:Serius]], [[MOOD:Bingung]], atau [[MOOD:Sinis]].
+Gunakan format markdown. Balasanmu harus tajam, singkat (1-2 paragraf pendek maksimal), dan merespons konteks percakapan terakhir yang diberikan.`;
+        }
+
+        function renderAgentList() {
+            ui.agentList.innerHTML = '';
+            if (state.agents.length === 0) {
+                ui.agentList.innerHTML = `<p class="text-sm text-gray-500 italic">Belum ada agen. Silakan tambah di bawah.</p>`;
+                return;
+            }
+
+            state.agents.forEach(agent => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between bg-gray-800 p-3 rounded-lg border border-gray-700";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm border shadow-sm" style="background-color: ${agent.color}20; border-color: ${agent.color}; color: ${agent.color}">
+                            ${agent.icon}
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-gray-200" style="color: ${agent.color}">${agent.name}</div>
+                            <div class="text-[10px] text-gray-400 font-medium">${agent.role}</div>
+                            <div class="text-[10px] text-gray-500 italic mt-0.5">Fokus: ${agent.focus || '-'}</div>
+                        </div>
+                    </div>
+                    <button onclick="deleteAgent('${agent.id}')" class="text-gray-500 hover:text-red-400 p-2 transition-colors" title="Hapus Agen">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                `;
+                ui.agentList.appendChild(div);
+            });
+        }
+
+        window.deleteAgent = function(id) {
+            state.agents = state.agents.filter(a => a.id !== id);
+            saveData();
+            updateAgentBadge();
+            renderAgentList();
+            updateLegend();
+            initCanvas(); 
+        };
+
+        ui.addAgentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newAgent = {
+                id: 'agent_' + Date.now(),
+                name: document.getElementById('newAgentName').value.trim(),
+                role: document.getElementById('newAgentRole').value.trim(),
+                character: document.getElementById('newAgentChar').value.trim(),
+                focus: document.getElementById('newAgentFocus').value.trim(),
+                icon: document.getElementById('newAgentIcon').value.trim() || '🤖',
+                color: document.getElementById('newAgentColor').value
+            };
+            
+            state.agents.push(newAgent);
+            saveData();
+            updateAgentBadge();
+            renderAgentList();
+            updateLegend();
+            initCanvas(); 
+            
+            ui.addAgentForm.reset();
+            document.getElementById('newAgentColor').value = '#3b82f6';
+            document.getElementById('newAgentIcon').value = '🤖';
+            showToast("Agen berhasil ditambahkan!", "success");
+        });
+
+        ui.manageAgentsBtn.addEventListener('click', () => {
+            if(state.isRunning) {
+                showToast("Hentikan simulasi terlebih dahulu untuk mengelola agen.", "error");
+                return;
+            }
+            ui.agentModal.classList.remove('hidden');
+        });
+        
+        ui.closeModalBtn.addEventListener('click', () => ui.agentModal.classList.add('hidden'));
+        
+        ui.agentModal.addEventListener('click', (e) => {
+            if(e.target === ui.agentModal) ui.agentModal.classList.add('hidden');
+        });
+
+        // ==========================================
+        // 3. SISTEM VISUALISASI CANVAS
+        // ==========================================
+        
+        const canvas = document.getElementById('agentCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationFrameId;
+
+        function updateLegend() {
+            const legend = document.getElementById('canvasLegend');
+            let html = state.agents.map(a => `<div class="flex items-center gap-1 whitespace-nowrap"><span class="w-2 h-2 rounded-full" style="background-color: ${a.color}"></span> ${a.name}</div>`).join('');
+            html += `<div class="flex items-center gap-1 whitespace-nowrap"><span class="w-2 h-2 rounded-full bg-purple-400"></span> Mod</div>`;
+            legend.innerHTML = html;
+        }
+
+        function initCanvas() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            particles = [];
+
+            state.agents.forEach(agent => {
+                particles.push({
+                    id: agent.id,
+                    color: agent.color,
+                    x: Math.random() * (canvas.width || 300),
+                    y: Math.random() * ((canvas.height || 200) - 50),
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5,
+                    isMod: false
+                });
+            });
+
+            particles.push({
+                id: moderator.id,
+                color: moderator.color,
+                x: (canvas.width || 300) / 2,
+                y: (canvas.height || 200) - 20,
+                vx: 0, vy: 0,
+                isMod: true
+            });
+
+            const resizeCanvas = () => {
+                const parent = canvas.parentElement;
+                const rect = parent.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+
+                particles.forEach(p => {
+                    if (p.x > canvas.width) p.x = canvas.width - 15;
+                    if (p.y > canvas.height) p.y = canvas.height - 15;
+                    if(p.isMod) { p.x = canvas.width / 2; p.y = canvas.height - 30; }
+                });
+            };
+
+            window.removeEventListener('resize', resizeCanvas);
+            window.addEventListener('resize', resizeCanvas);
+            setTimeout(resizeCanvas, 0); 
+            animateCanvas();
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            for(let i=0; i<particles.length; i++) {
+                for(let j=i+1; j<particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 150) {
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                    }
+                }
+            }
+            ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.5; ctx.stroke();
+
+            particles.forEach(p => {
+                if(p.isMod) {
+                    p.x += ( (canvas.width/2) - p.x ) * 0.1;
+                    p.y += ( (canvas.height - 30) - p.y ) * 0.1;
+
+                    if(state.isModeratorTurn) {
+                        const pulse = 20 + Math.sin(Date.now() * 0.005) * 8;
+                        ctx.beginPath(); ctx.arc(p.x, p.y, pulse, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color + '30'; ctx.fill();
+                    }
+                } else {
+                    if (state.speakingAgentId === p.id) {
+                        const targetX = canvas.width / 2;
+                        const targetY = canvas.height / 2 - 20;
+                        p.vx += (targetX - p.x) * 0.002; p.vy += (targetY - p.y) * 0.002;
+                        
+                        // Warna Mood V3
+                        const moodColors = { "Senang": "#fbbf24", "Marah": "#ef4444", "Serius": "#60a5fa", "Bingung": "#a78bfa", "Sinis": "#fb7185", "Normal": p.color };
+                        const activeColor = moodColors[state.speakingAgentMood] || p.color;
+
+                        const pulse = 15 + Math.sin(Date.now() * 0.005) * 6;
+                        ctx.beginPath(); ctx.arc(p.x, p.y, pulse, 0, Math.PI * 2);
+                        ctx.fillStyle = activeColor + '40'; ctx.fill();
+                        
+                        // Ubah warna asli partikel sementara jika sedang bicara
+                        p.tempColor = activeColor;
+                    } else {
+                        p.tempColor = p.color;
+                        p.vx += (Math.random() - 0.5) * 0.15; p.vy += (Math.random() - 0.5) * 0.15;
+                        if(p.y > canvas.height - 60) p.vy -= 0.05; 
+                    }
+
+                    p.vx *= 0.95; p.vy *= 0.95;
+                    p.x += p.vx; p.y += p.vy;
+
+                    const padding = 15;
+                    if (p.x < padding) { p.x = padding; p.vx *= -1; }
+                    if (p.x > canvas.width - padding) { p.x = canvas.width - padding; p.vx *= -1; }
+                    if (p.y < padding) { p.y = padding; p.vy *= -1; }
+                    if (p.y > canvas.height - padding) { p.y = canvas.height - padding; p.vy *= -1; }
+                }
+
+                ctx.beginPath();
+                const radius = p.isMod ? 8 : (canvas.width > 400 ? 6 : 4); 
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.tempColor || p.color;
+                
+                if (state.speakingAgentId === p.id || (p.isMod && state.isModeratorTurn)) {
+                    ctx.shadowBlur = 15; ctx.shadowColor = p.tempColor || p.color;
+                }
+                ctx.fill(); ctx.shadowBlur = 0;
+            });
+
+            animationFrameId = requestAnimationFrame(animateCanvas);
+        }
+
+        // ==========================================
+        // 4. CHAT & API DEEPSEEK
+        // ==========================================
+
+        marked.setOptions({ breaks: true, gfm: true });
+
+        function scrollToBottom() {
+            ui.chatContainer.scrollTo({ top: ui.chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        function addMessageToUI(actor, text, isSystem = false) {
+            const div = document.createElement('div');
+            
+            // Deteksi Mood V3
+            let currentMood = "Normal";
+            let contentText = text;
+            const moodMatch = text.match(/\[\[MOOD:(.*?)\]\]/);
+            if (moodMatch) {
+                currentMood = moodMatch[1];
+                contentText = text.replace(/\[\[MOOD:.*?\]\]/, '').trim();
+                if (actor && actor.id !== moderator.id) state.speakingAgentMood = currentMood;
+            }
+
+            const moodEmojis = { "Normal": "😐", "Senang": "😊", "Marah": "😡", "Serius": "🧐", "Bingung": "🤔", "Sinis": "😏" };
+            const moodEmoji = moodEmojis[currentMood] || "😐";
+
+            if (isSystem) {
+                div.className = 'flex justify-center my-4 msg-animate';
+                const cleanSysHtml = DOMPurify.sanitize(marked.parseInline(contentText));
+                div.innerHTML = `<span class="bg-gray-800/80 text-gray-300 text-xs px-4 py-1.5 rounded-full border border-gray-700 shadow-sm text-center max-w-[85%] backdrop-blur-sm">${cleanSysHtml}</span>`;
+            } else {
+                const cleanHtml = DOMPurify.sanitize(marked.parse(contentText));
+                const isMod = actor.id === moderator.id;
+
+                div.className = `flex items-start gap-3 md:gap-4 msg-animate w-full ${isMod ? 'flex-row-reverse' : ''}`;
+                div.innerHTML = `
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center border flex-shrink-0 mt-1 shadow-lg text-sm md:text-base relative" style="background-color: ${actor.color}15; border-color: ${actor.color}40; color: ${actor.color}">
+                        ${actor.icon}
+                        ${!isMod ? `<span class="absolute -bottom-1 -right-1 bg-gray-900 border border-gray-700 rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-sm">${moodEmoji}</span>` : ''}
+                    </div>
+                    <div class="flex-1 min-w-0 max-w-[90%] md:max-w-[80%]">
+                        <div class="flex items-baseline gap-2 mb-1 px-1 ${isMod ? 'justify-end' : 'justify-start'}">
+                            ${isMod ? `<span class="text-[9px] md:text-[10px] text-gray-500 uppercase tracking-wider hidden sm:inline-block">${actor.role}</span>` : ''}
+                            <span class="font-semibold text-[13px] md:text-sm tracking-wide" style="color: ${actor.color}">${actor.name}</span>
+                            ${!isMod ? `<span class="text-[9px] md:text-[10px] text-gray-500 uppercase tracking-wider hidden sm:inline-block">${actor.role}</span>` : ''}
+                        </div>
+                        <div class="border rounded-2xl p-3 md:p-4 text-[13px] md:text-sm shadow-md markdown-body transition-all ${isMod ? 'bg-purple-900/20 border-purple-800/50 text-gray-100 rounded-tr-sm' : 'bg-gray-900/90 border-gray-800 text-gray-200 rounded-tl-sm hover:border-gray-700'}">
+                            ${cleanHtml}
+                        </div>
+                    </div>
+                `;
+            }
+            ui.chatContainer.appendChild(div);
+            scrollToBottom(); setTimeout(scrollToBottom, 100); 
+        }
+
+        async function fetchDeepSeekResponse(agent) {
+            const backendEndpoint = `${ui.backendUrl.value.trim()}/chat`;
+
+            try {
+                const response = await fetch(backendEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent: {
+                            id: agent.id,
+                            name: agent.name,
+                            role: agent.role,
+                            character: agent.character,
+                            focus: agent.focus
+                        },
+                        topic: state.currentTopic,
+                        history: state.discussionHistory
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || `HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                return data.content;
+
+            } catch (error) {
+                console.error("Backend Error:", error);
+                throw error;
+            }
+        }
+
+        async function simulationLoop() {
+            if (!state.isRunning) return;
+
+            if (state.turnIndex >= state.agents.length) {
+                setModeratorTurn();
+                return;
+            }
+
+            const currentAgent = state.agents[state.turnIndex];
+            state.speakingAgentId = currentAgent.id;
+            
+            ui.statusDot.className = `w-2 h-2 rounded-full animate-pulse`;
+            ui.statusDot.style.backgroundColor = currentAgent.color;
+            ui.statusText.textContent = `${currentAgent.name} menganalisis...`;
+            
+            ui.typingName.textContent = currentAgent.name;
+            ui.typingName.style.color = currentAgent.color;
+            ui.typingAvatar.textContent = currentAgent.icon;
+            ui.typingAvatar.style.backgroundColor = `${currentAgent.color}20`;
+            ui.typingAvatar.style.borderColor = currentAgent.color;
+            
+            ui.typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            try {
+                const responseText = await fetchDeepSeekResponse(currentAgent);
+                if (!state.isRunning) return; 
+
+                state.discussionHistory.push({ actorId: currentAgent.id, actorName: currentAgent.name, content: responseText });
+                ui.typingIndicator.classList.add('hidden');
+                addMessageToUI(currentAgent, responseText);
+                speak(responseText, currentAgent); // V3: Panggil TTS
+
+                state.turnIndex++;
+                state.speakingAgentId = null; 
+                ui.statusDot.style.backgroundColor = '#9ca3af'; 
+                ui.statusText.textContent = "Menunggu...";
+                
+                setTimeout(() => { if (state.isRunning) simulationLoop(); }, 3000);
+
+            } catch (error) {
+                ui.typingIndicator.classList.add('hidden');
+                addMessageToUI({ id:'sys', name: 'System Error', role: 'API Error', color: '#ef4444', icon: '🚨' }, `**Gagal menghubungi DeepSeek.**\nPesan: \`${error.message}\``);
+                stopSimulation();
+            }
+        }
+
+        // ==========================================
+        // 5. KONTROL MODERATOR (USER)
+        // ==========================================
+
+        function setModeratorTurn() {
+            state.isModeratorTurn = true;
+            state.speakingAgentId = null; 
+
+            ui.statusDot.className = `w-2 h-2 rounded-full animate-pulse`;
+            ui.statusDot.style.backgroundColor = moderator.color;
+            ui.statusText.textContent = "Giliran Moderator";
+            
+            addMessageToUI(null, "🔄 *Putaran selesai. Silakan berikan tanggapan, arahan, atau ganti topik.*", true);
+
+            ui.modInput.disabled = false;
+            ui.sendBtn.disabled = false;
+            ui.modInput.placeholder = "Ketik arahan Anda untuk para agen...";
+            ui.modInput.classList.add('border-purple-500/50', 'bg-gray-800/80');
+            ui.modIcon.classList.add('text-purple-400');
+            
+            if(window.innerWidth > 768) ui.modInput.focus();
+            scrollToBottom();
+        }
+
+        function handleModeratorSubmit(e) {
+            e.preventDefault();
+            if(!state.isModeratorTurn || !state.isRunning) return;
+
+            const text = ui.modInput.value.trim();
+            if(!text) return;
+
+            state.discussionHistory.push({ actorId: moderator.id, actorName: moderator.name, content: text });
+            addMessageToUI(moderator, text);
+
+            state.currentTopic = text; 
+            ui.modInput.value = '';
+            ui.modInput.disabled = true;
+            ui.sendBtn.disabled = true;
+            ui.modInput.placeholder = "Tunggu giliranmu...";
+            ui.modInput.style.height = 'auto'; 
+            ui.modInput.classList.remove('border-purple-500/50', 'bg-gray-800/80');
+            ui.modIcon.classList.remove('text-purple-400');
+
+            state.isModeratorTurn = false;
+            state.turnIndex = 0; 
+            
+            addMessageToUI(null, "⚙️ *Agen memproses instruksi Moderator...*", true);
+            setTimeout(() => { if (state.isRunning) simulationLoop(); }, 1500);
+        }
+
+        // ==========================================
+        // 6. LOGIC EXPORT & IMPORT (FILE & TEXT)
+        // ==========================================
+        let currentImportType = null;
+        let pendingAgentDataFromFile = null; // Menyimpan sementara agen dari file
+
+        // Fungsi Umum Pemrosesan
+        function processChatImportData(data) {
+            if (data.type !== "mirofish_chat" && (!data.history || !Array.isArray(data.history))) {
+                throw new Error("Format JSON tidak valid untuk Chat.");
+            }
+            if (data.topic) { state.currentTopic = data.topic; ui.topic.value = data.topic; }
+            if (data.agents && Array.isArray(data.agents)) {
+                state.agents = data.agents;
+                saveData(); updateAgentBadge(); renderAgentList(); updateLegend(); initCanvas();
+            }
+            state.discussionHistory = data.history;
+            ui.chatContainer.innerHTML = ''; 
+            
+            addMessageToUI(null, `📂 **Berhasil memuat log percakapan sebelumnya.** \nTopik Terakhir: *${state.currentTopic}*`, true);
+            state.discussionHistory.forEach(msg => {
+                let actor = msg.actorId === moderator.id ? moderator : (state.agents.find(a => a.id === msg.actorId) || { id: msg.actorId, name: msg.actorName, color: '#6b7280', icon: '👤', role: 'Agen Lama' });
+                addMessageToUI(actor, msg.content);
+            });
+            showToast("Percakapan berhasil diimpor!", "success");
+        }
+
+        function processAgentImportData(agents, mode) {
+            if (mode === 'replace') {
+                state.agents = agents;
+            } else {
+                const appendedAgents = agents.map(a => ({
+                    ...a, 
+                    id: 'agent_' + Date.now() + Math.floor(Math.random() * 1000)
+                }));
+                state.agents = [...state.agents, ...appendedAgents];
+            }
+            saveData(); updateAgentBadge(); renderAgentList(); updateLegend(); initCanvas();
+            showToast("Preset Agen berhasil diimpor!", "success");
+        }
+
+        function downloadJSONFile(dataObj, filename) {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataObj, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast("File sedang diunduh...", "info");
+        }
+
+        // --- MODE TEKS (Modal) ---
+        function openDataModal(mode, type, data = "") {
+            ui.dataModal.classList.remove('hidden');
+            ui.importAgentOptions.classList.add('hidden');
+            
+            if (mode === 'export') {
+                ui.dataModalTitle.textContent = `Export ${type === 'chat' ? 'Chat' : 'Agen'} (Teks)`;
+                ui.dataModalDesc.textContent = "Salin teks di bawah ini dan simpan di catatan Anda.";
+                ui.dataTextarea.value = data;
+                ui.dataTextarea.readOnly = true;
+                ui.copyDataBtn.classList.remove('hidden');
+                ui.processImportBtn.classList.add('hidden');
+            } else {
+                ui.dataModalTitle.textContent = `Import ${type === 'chat' ? 'Chat' : 'Agen'} (Teks)`;
+                ui.dataModalDesc.textContent = "Tempel (Paste) kode JSON yang telah Anda salin sebelumnya.";
+                ui.dataTextarea.value = "";
+                ui.dataTextarea.readOnly = false;
+                ui.copyDataBtn.classList.add('hidden');
+                ui.processImportBtn.classList.remove('hidden');
+                
+                if(type === 'agents') ui.importAgentOptions.classList.remove('hidden');
+            }
+            currentImportType = type;
+        }
+
+        ui.closeDataModalBtn.addEventListener('click', () => ui.dataModal.classList.add('hidden'));
+
+        ui.copyDataBtn.addEventListener('click', () => {
+            ui.dataTextarea.select();
+            document.execCommand('copy');
+            showToast("Data berhasil disalin ke clipboard!", "success");
+        });
+
+        ui.processImportBtn.addEventListener('click', () => {
+            const jsonText = ui.dataTextarea.value.trim();
+            if (!jsonText) { showToast("Kotak teks masih kosong!", "error"); return; }
+            try {
+                const data = JSON.parse(jsonText);
+                if (currentImportType === 'chat') {
+                    processChatImportData(data);
+                } else if (currentImportType === 'agents') {
+                    if (data.type !== "mirofish_agents" || !Array.isArray(data.agents)) throw new Error("Format Teks tidak valid.");
+                    const mode = document.querySelector('input[name="agentImportType"]:checked').value;
+                    processAgentImportData(data.agents, mode);
+                }
+                ui.dataModal.classList.add('hidden');
+            } catch (err) {
+                showToast("Gagal Import: JSON tidak valid.", "error");
+            }
+        });
+
+        // --- HANDLERS: CHAT ---
+        ui.exportFileBtn.addEventListener('click', () => {
+            if (state.discussionHistory.length === 0) { showToast("Tidak ada chat untuk diexport.", "error"); return; }
+            const exportData = { type: "mirofish_chat", version: "2.0", timestamp: new Date().toISOString(), topic: state.currentTopic, agents: state.agents, history: state.discussionHistory };
+            downloadJSONFile(exportData, `MiroFish_Chat_${Date.now()}.json`);
+        });
+
+        ui.importFileBtn.addEventListener('click', () => {
+            if (state.isRunning) { showToast("Harap hentikan sesi terlebih dahulu.", "error"); return; }
+            ui.importFileInput.click();
+        });
+
+        ui.importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    processChatImportData(JSON.parse(evt.target.result));
+                } catch (err) { showToast("Gagal membaca file: " + err.message, "error"); }
+                ui.importFileInput.value = ''; 
+            };
+            reader.readAsText(file);
+        });
+
+        ui.exportTextBtn.addEventListener('click', () => {
+            if (state.discussionHistory.length === 0) { showToast("Tidak ada chat untuk disalin.", "error"); return; }
+            const exportData = { type: "mirofish_chat", version: "2.0", timestamp: new Date().toISOString(), topic: state.currentTopic, agents: state.agents, history: state.discussionHistory };
+            openDataModal('export', 'chat', JSON.stringify(exportData, null, 2));
+        });
+        ui.importTextBtn.addEventListener('click', () => {
+            if (state.isRunning) { showToast("Harap hentikan sesi terlebih dahulu.", "error"); return; }
+            openDataModal('import', 'chat');
+        });
+
+        // --- HANDLERS: AGENTS ---
+        ui.exportAgentFileBtn.addEventListener('click', () => {
+            if (state.agents.length === 0) { showToast("Tidak ada agen untuk diexport.", "error"); return; }
+            const exportData = { type: "mirofish_agents", version: "2.0", timestamp: new Date().toISOString(), agents: state.agents };
+            downloadJSONFile(exportData, `MiroFish_Agents_${Date.now()}.json`);
+        });
+
+        ui.importAgentFileBtn.addEventListener('click', () => ui.importAgentFileInput.click());
+
+        ui.importAgentFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data.type !== "mirofish_agents" || !Array.isArray(data.agents)) throw new Error("Format file tidak valid.");
+                    pendingAgentDataFromFile = data.agents;
+                    ui.confirmFileModal.classList.remove('hidden'); // Tampilkan Modal Konfirmasi
+                } catch (err) { showToast("Gagal membaca file: " + err.message, "error"); }
+                ui.importAgentFileInput.value = ''; 
+            };
+            reader.readAsText(file);
+        });
+
+        // Confirm File Modal Handlers
+        ui.btnConfirmReplace.addEventListener('click', () => {
+            processAgentImportData(pendingAgentDataFromFile, 'replace');
+            ui.confirmFileModal.classList.add('hidden');
+        });
+        ui.btnConfirmAppend.addEventListener('click', () => {
+            processAgentImportData(pendingAgentDataFromFile, 'append');
+            ui.confirmFileModal.classList.add('hidden');
+        });
+        ui.btnConfirmCancel.addEventListener('click', () => {
+            pendingAgentDataFromFile = null;
+            ui.confirmFileModal.classList.add('hidden');
+        });
+
+        ui.exportAgentTextBtn.addEventListener('click', () => {
+            if (state.agents.length === 0) { showToast("Tidak ada agen untuk disalin.", "error"); return; }
+            const exportData = { type: "mirofish_agents", version: "2.0", timestamp: new Date().toISOString(), agents: state.agents };
+            openDataModal('export', 'agents', JSON.stringify(exportData, null, 2));
+        });
+        ui.importAgentTextBtn.addEventListener('click', () => openDataModal('import', 'agents'));
+
+
+        // ==========================================
+        // 7. INISIALISASI
+        // ==========================================
+
+        function startSimulation() {
+            saveData(); 
+            const topic = ui.topic.value.trim();
+
+            if (!ui.backendUrl.value) { ui.backendUrl.focus(); showToast("Masukkan URL Backend VPS!", "error"); return; }
+            if (!topic) { ui.topic.focus(); showToast("Masukkan topik simulasi!", "error"); return; }
+            if (state.agents.length === 0) { showToast("Tambahkan minimal 1 agen!", "error"); return; }
+
+            state.currentTopic = topic;
+            state.isRunning = true;
+            state.turnIndex = 0;
+            state.isModeratorTurn = false;
+            
+            if (state.discussionHistory.length === 0) {
+                ui.chatContainer.innerHTML = '';
+                state.discussionHistory.push({ actorId: moderator.id, actorName: moderator.name, content: `Topik Diskusi Awal: ${topic}` });
+                addMessageToUI(moderator, `Mari kita diskusikan:\n\n**${topic}**`);
+            } else {
+                addMessageToUI(null, "▶️ *Sesi dilanjutkan...*", true);
+            }
+
+            ui.startBtn.classList.add('hidden');
+            ui.stopBtn.disabled = false;
+            ui.stopBtn.classList.remove('hidden');
+            ui.backendUrl.disabled = true;
+            ui.topic.disabled = true;
+            ui.manageAgentsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            // Disable export/import tools during run
+            ui.exportFileBtn.disabled = true; ui.importFileBtn.disabled = true;
+            ui.exportTextBtn.disabled = true; ui.importTextBtn.disabled = true;
+            
+            if(window.innerWidth < 768) {
+                window.scrollTo({ top: document.querySelector('.bg-gray-950.relative').offsetTop, behavior: 'smooth'});
+            }
+
+            setTimeout(simulationLoop, 1500);
+        }
+
+        function stopSimulation() {
+            state.isRunning = false;
+            state.speakingAgentId = null;
+            state.isModeratorTurn = false;
+
+            // V3: Hentikan suara jika sedang bicara
+            if (synth) synth.cancel();
+
+            ui.typingIndicator.classList.add('hidden');
+            ui.statusDot.style.backgroundColor = '#4b5563'; 
+            ui.statusDot.classList.remove('animate-pulse');
+            ui.statusText.textContent = "Sesi Diakhiri";
+
+            addMessageToUI(null, "🛑 *Sesi diskusi telah dihentikan.*", true);
+
+            ui.startBtn.disabled = false;
+            ui.startBtn.textContent = "Lanjutkan Sesi";
+            ui.startBtn.classList.remove('hidden');
+            ui.stopBtn.disabled = true;
+            ui.stopBtn.classList.add('hidden');
+            ui.backendUrl.disabled = false;
+            ui.topic.disabled = false;
+            ui.manageAgentsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            ui.exportFileBtn.disabled = false; ui.importFileBtn.disabled = false;
+            ui.exportTextBtn.disabled = false; ui.importTextBtn.disabled = false;
+
+            ui.modInput.disabled = true;
+            ui.sendBtn.disabled = true;
+            ui.modInput.placeholder = "Sesi berakhir.";
+        }
+
+        ui.startBtn.addEventListener('click', startSimulation);
+        ui.stopBtn.addEventListener('click', stopSimulation);
+        ui.modForm.addEventListener('submit', handleModeratorSubmit);
+
+        ui.modInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            ui.sendBtn.disabled = this.value.trim().length === 0;
+        });
+
+        ui.modInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if(!this.disabled && this.value.trim().length > 0) ui.modForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // V3: Voice Toggle Handler
+        ui.voiceToggle.addEventListener('change', (e) => {
+            state.isVoiceEnabled = e.target.checked;
+            if (state.isVoiceEnabled) {
+                loadVoices();
+                showToast("Suara Agen Aktif (Bahasa Indonesia)", "info");
+                // Test suara pendek
+                const ut = new SpeechSynthesisUtterance("Suara aktif");
+                const idVoice = voices.find(v => v.lang.includes('id-ID'));
+                if (idVoice) ut.voice = idVoice;
+                synth.speak(ut);
+            } else {
+                if (synth) synth.cancel();
+                showToast("Suara Agen Dimatikan", "info");
+            }
+        });
+
+        // Initialize on load
+        window.onload = () => {
+            loadData();
+            initCanvas();
+        };
+
+    </script>
+</body>
+</html>
