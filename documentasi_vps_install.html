@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentasi AISwarm Microfish</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans flex h-screen overflow-hidden">
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-gray-900 text-white w-64 flex-shrink-0 flex flex-col absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-30 shadow-xl">
+        <div class="flex items-center justify-between h-16 border-b border-gray-800 px-6">
+            <h1 class="text-xl font-bold tracking-wider text-blue-400">Sumopod Docs</h1>
+            <!-- Close button for mobile -->
+            <button class="md:hidden text-gray-400 hover:text-white" onclick="toggleSidebar()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-2 px-3">
+                <li>
+                    <button onclick="showPage('tutorial')" id="nav-tutorial" class="nav-btn w-full flex items-center px-4 py-3 bg-gray-800 text-blue-400 rounded-lg transition-colors font-medium text-left">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        Tutorial Instalasi
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showPage('readme')" id="nav-readme" class="nav-btn w-full flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium text-left">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Readme
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-800 text-sm text-gray-500 text-center">
+            &copy; 2026 Sumopod Server
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 bg-white">
+        
+        <!-- Mobile Header -->
+        <header class="md:hidden bg-white shadow-sm h-16 flex items-center px-4 justify-between border-b border-gray-200 z-10">
+            <div class="flex items-center">
+                <button onclick="toggleSidebar()" class="text-gray-600 hover:text-gray-900 focus:outline-none p-2 -ml-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <span class="ml-3 font-semibold text-gray-800 text-lg">Sumopod Docs</span>
+            </div>
+        </header>
+
+        <!-- Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12">
+            
+            <div class="max-w-4xl mx-auto">
+                
+                <!-- TUTORIAL PAGE -->
+                <div id="page-tutorial" class="page-content block fade-in">
+                    <div class="mb-8 border-b pb-4">
+                        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">Panduan Deployment AISwarm Microfish</h1>
+                        <p class="text-gray-600 text-lg">Panduan lengkap dan mendalam untuk melakukan deployment proyek AISwarm Microfish. Panduan ini disusun agar Anda dapat menjalankan layanan microservice ini dengan stabil, baik untuk keperluan pengembangan maupun produksi menggunakan PM2.</p>
+                    </div>
+
+                    <p class="mb-6 text-gray-700 leading-relaxed">Proyek ini merupakan layanan berbasis Python (FastAPI/Uvicorn) yang mengintegrasikan kecerdasan buatan (DeepSeek). Ikuti langkah-langkah di bawah ini secara berurutan.</p>
+
+                    <!-- Step 1 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">1</span>
+                            Persiapan dan Unduh Source Code
+                        </h2>
+                        <p class="text-gray-700 mb-3">Langkah pertama adalah menyalin repositori dari GitHub ke direktori lokal atau VPS Anda. Pastikan Anda sudah menginstal <code>git</code>.</p>
+                        <div class="bg-gray-900 rounded-xl p-4 shadow-md overflow-x-auto code-block">
+<pre><code class="text-gray-300 text-sm leading-relaxed"><span class="text-gray-500"># Menarik data dari repositori resmi</span>
+<span class="text-green-400">git clone</span> https://github.com/unobengkel/aiswarm_microfish.git
+
+<span class="text-gray-500"># Masuk ke direktori proyek</span>
+<span class="text-green-400">cd</span> aiswarm_microfish</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">2</span>
+                            Isolasi Lingkungan (Virtual Environment)
+                        </h2>
+                        <p class="text-gray-700 mb-3">Sangat disarankan untuk menggunakan <strong>Virtual Environment</strong> agar pustaka (library) proyek ini tidak bentrok dengan pustaka sistem global Anda.</p>
+                        <div class="bg-gray-900 rounded-xl p-4 shadow-md overflow-x-auto code-block">
+<pre><code class="text-gray-300 text-sm leading-relaxed"><span class="text-gray-500"># Membuat folder venv sebagai wadah library</span>
+python3 -m venv venv
+
+<span class="text-gray-500"># Mengaktifkan virtual environment</span>
+<span class="text-gray-500"># Jika di Linux/macOS:</span>
+<span class="text-green-400">source</span> venv/bin/activate</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">3</span>
+                            Instalasi Dependensi
+                        </h2>
+                        <p class="text-gray-700 mb-3">Setelah lingkungan virtual aktif, instal semua modul Python yang dibutuhkan oleh proyek ini sesuai dengan daftar di <code>requirements.txt</code>.</p>
+                        <div class="bg-gray-900 rounded-xl p-4 shadow-md overflow-x-auto code-block">
+<pre><code class="text-gray-300 text-sm leading-relaxed">pip install --upgrade pip
+pip install -r requirements.txt</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">4</span>
+                            Konfigurasi API Key
+                        </h2>
+                        <p class="text-gray-700 mb-3">Layanan ini membutuhkan <strong>DeepSeek API Key</strong> agar fungsi AI-nya berjalan. Ada dua cara untuk melakukannya:</p>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                                <h3 class="font-bold text-red-700 mb-1">Cara Langsung (Tidak Disarankan)</h3>
+                                <p class="text-gray-700 text-sm mb-2">Memasukkan key langsung ke dalam file kode. Ini berisiko jika kode Anda terunggah ke publik.</p>
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2">
+<pre><code class="text-gray-300 text-sm"><span class="text-green-400">nano</span> main.py   <span class="text-gray-500"># masuk ke halaman main.py</span>
+
+<span class="text-gray-500"># Mengedit langsung di dalam file (misal: main.py y)</span>
+DEEPSEEK_API_KEY = <span class="text-yellow-300">"sk-your-key-here"</span></code></pre>
+                                </div>
+                            </div>
+
+                            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                                <h3 class="font-bold text-green-700 mb-1">Cara Aman (Disarankan)</h3>
+                                <p class="text-gray-700 text-sm mb-2">Menggunakan environment variable di terminal.</p>
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2">
+<pre><code class="text-gray-300 text-sm"><span class="text-green-400">export</span> DEEPSEEK_API_KEY=<span class="text-yellow-300">"sk-..."</span></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">5</span>
+                            Pengaturan Port dan Host
+                        </h2>
+                        <p class="text-gray-700 mb-3">Untuk memastikan aplikasi dapat diakses dari luar (public IP), Anda perlu menyesuaikan konfigurasi server Uvicorn di dalam file <code>main.py</code>.</p>
+                        
+                        <ol class="list-decimal pl-5 space-y-3 text-gray-700">
+                            <li>Buka file menggunakan editor teks <code>nano</code>:
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2 mb-2">
+<pre><code class="text-gray-300 text-sm"><span class="text-green-400">nano</span> main.py</code></pre>
+                                </div>
+                            </li>
+                            <li>Cari bagian <code>uvicorn.run</code> dan pastikan pengaturannya seperti berikut agar bisa diakses secara global:
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2 mb-2">
+<pre><code class="text-gray-300 text-sm">uvicorn.run(app, host=<span class="text-yellow-300">"0.0.0.0"</span>, port=<span class="text-blue-300">8000</span>)</code></pre>
+                                </div>
+                                <span class="text-sm text-gray-500 italic">(Ganti port 8000 jika Anda ingin menggunakan port lain).</span>
+                            </li>
+                            <li>Simpan dengan menekan <code>CTRL + O</code>, lalu <code>Enter</code>, dan keluar dengan <code>CTRL + X</code>.</li>
+                        </ol>
+                    </div>
+
+                    <!-- Step 6 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">6</span>
+                            Uji Coba Server
+                        </h2>
+                        <p class="text-gray-700 mb-3">Sebelum menjalankan di latar belakang, lakukan pengujian langsung untuk memastikan tidak ada error pada kode atau dependensi.</p>
+                        <div class="bg-gray-900 rounded-xl p-4 shadow-md overflow-x-auto code-block mb-3">
+<pre><code class="text-gray-300 text-sm leading-relaxed">python main.py</code></pre>
+                        </div>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 text-blue-800 text-sm rounded-r-lg">
+                            <strong>Catatan:</strong> Jika muncul pesan "Uvicorn running on http://0.0.0.0:8000", berarti server sudah aktif. Tekan <code>CTRL + C</code> untuk menghentikannya sebelum lanjut ke tahap permanen.
+                        </div>
+                    </div>
+
+                    <!-- Step 7 -->
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">7</span>
+                            Deployment dengan PM2 (Production Mode)
+                        </h2>
+                        <p class="text-gray-700 mb-4">Agar aplikasi tetap berjalan meskipun terminal ditutup atau server melakukan restart, kita akan menggunakan <strong>PM2 (Process Manager 2)</strong>.</p>
+                        
+                        <ol class="list-decimal pl-5 space-y-4 text-gray-700">
+                            <li><strong>Keluar dari Virtual Environment</strong> (Opsional, karena kita akan memanggil path-nya secara langsung):
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2 mb-2">
+<pre><code class="text-gray-300 text-sm"><span class="text-green-400">deactivate</span></code></pre>
+                                </div>
+                            </li>
+                            <li><strong>Jalankan dengan PM2:</strong><br> Kita akan memerintahkan PM2 untuk menjalankan <code>main.py</code> menggunakan interpreter Python yang ada di dalam folder <code>venv</code>.
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2 mb-2">
+<pre><code class="text-gray-300 text-sm"><span class="text-green-400">pm2</span> start main.py --name <span class="text-yellow-300">"aiswarm-microfish"</span> --interpreter ./venv/bin/python</code></pre>
+                                </div>
+                            </li>
+                            <li><strong>Monitor Status:</strong><br> Untuk melihat apakah aplikasi berjalan dengan lancar:
+                                <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto code-block mt-2 mb-2">
+<pre><code class="text-gray-300 text-sm"><span class="text-green-400">pm2</span> list
+<span class="text-green-400">pm2</span> logs aiswarm-microfish</code></pre>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <!-- PM2 Commands -->
+                    <div class="mb-10 bg-gray-100 p-6 rounded-2xl border border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2">Perintah Tambahan PM2:</h3>
+                        <ul class="space-y-3 text-gray-700">
+                            <li class="flex items-center flex-wrap">
+                                <span class="font-semibold w-full md:w-48 mb-1 md:mb-0">Berhenti:</span>
+                                <code class="bg-gray-800 text-gray-200 px-3 py-1 rounded text-sm code-block flex-1">pm2 stop aiswarm-microfish</code>
+                            </li>
+                            <li class="flex items-center flex-wrap">
+                                <span class="font-semibold w-full md:w-48 mb-1 md:mb-0">Restart:</span>
+                                <code class="bg-gray-800 text-gray-200 px-3 py-1 rounded text-sm code-block flex-1">pm2 restart aiswarm-microfish</code>
+                            </li>
+                            <li class="flex items-center flex-wrap">
+                                <span class="font-semibold w-full md:w-48 mb-1 md:mb-0">Hapus dari list:</span>
+                                <code class="bg-gray-800 text-gray-200 px-3 py-1 rounded text-sm code-block flex-1">pm2 delete aiswarm-microfish</code>
+                            </li>
+                            <li class="flex items-center flex-wrap">
+                                <span class="font-semibold w-full md:w-48 mb-1 md:mb-0">Auto-start saat reboot:</span>
+                                <code class="bg-gray-800 text-gray-200 px-3 py-1 rounded text-sm code-block flex-1">pm2 save</code>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <p class="text-gray-600 italic">Dengan langkah-langkah di atas, <strong>AISwarm Microfish</strong> Anda sekarang sudah berjalan sebagai layanan latar belakang yang tangguh! Ada bagian spesifik yang ingin kamu ulik lebih dalam, misalnya integrasi ke domain atau setup SSL (HTTPS)?</p>
+                </div>
+
+                <!-- README PAGE -->
+                <div id="page-readme" class="page-content hidden fade-in">
+                    <div class="mb-8 border-b pb-4">
+                        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 flex items-center">
+                            <svg class="w-10 h-10 mr-3 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Readme
+                        </h1>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 md:p-10">
+                        <ul class="space-y-6">
+                            <li class="flex">
+                                <div class="flex-shrink-0">
+                                    <div class="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-bold">1</div>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-lg md:text-xl text-gray-800 pt-1">Ini adalah dokumentasi instalasi vps server di sumopod.</p>
+                                </div>
+                            </li>
+                            <li class="flex">
+                                <div class="flex-shrink-0">
+                                    <div class="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-bold">2</div>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-lg md:text-xl text-gray-800 pt-1 font-mono bg-gray-100 px-3 py-1 rounded-md inline-block">Tanggal : 14/04/2026 waktu 20:20</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Toggle Sidebar on Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Switch Pages
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // Show selected page
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+            
+            // Update Navigation UI
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-800', 'text-blue-400');
+                btn.classList.add('text-gray-400');
+            });
+            
+            const activeBtn = document.getElementById('nav-' + pageId);
+            activeBtn.classList.remove('text-gray-400');
+            activeBtn.classList.add('bg-gray-800', 'text-blue-400');
+
+            // Close sidebar on mobile after clicking
+            if (window.innerWidth < 768) { // md breakpoint in tailwind
+                toggleSidebar();
+            }
+        }
+    </script>
+</body>
+</html>
