@@ -24,6 +24,13 @@
         .code-block {
             font-family: 'Courier New', Courier, monospace;
         }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans flex h-screen overflow-hidden">
@@ -47,6 +54,12 @@
                     <button onclick="showPage('tutorial')" id="nav-tutorial" class="nav-btn w-full flex items-center px-4 py-3 bg-gray-800 text-blue-400 rounded-lg transition-colors font-medium text-left">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                         Tutorial Instalasi
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showPage('notes')" id="nav-notes" class="nav-btn w-full flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium text-left">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        Catatan Penggunaan
                     </button>
                 </li>
                 <li>
@@ -257,6 +270,43 @@ DEEPSEEK_API_KEY = <span class="text-yellow-300">"sk-your-key-here"</span></code
                     </div>
 
                     <p class="text-gray-600 italic">Dengan langkah-langkah di atas, <strong>AISwarm Microfish</strong> Anda sekarang sudah berjalan sebagai layanan latar belakang yang tangguh! Ada bagian spesifik yang ingin kamu ulik lebih dalam, misalnya integrasi ke domain atau setup SSL (HTTPS)?</p>
+                </div>
+
+                <!-- NOTES PAGE -->
+                <div id="page-notes" class="page-content hidden fade-in">
+                    <div class="mb-8 border-b pb-4">
+                        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">Catatan Penggunaan & Pemeliharaan</h1>
+                        <p class="text-gray-600 text-lg">Setelah server berjalan, gunakan panduan ini untuk menjaga kesehatan layanan Anda.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                        <div class="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                Monitoring Performa
+                            </h3>
+                            <p class="text-gray-600 text-sm mb-4">Gunakan tool monitoring internal PM2 untuk melihat penggunaan CPU dan RAM secara real-time.</p>
+                            <code class="bg-gray-100 text-blue-600 px-3 py-2 rounded block text-sm font-mono">pm2 monit</code>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Melihat Riwayat Log
+                            </h3>
+                            <p class="text-gray-600 text-sm mb-4">Jika ada error atau masalah akses, periksa log aplikasi untuk detail masalahnya.</p>
+                            <code class="bg-gray-100 text-blue-600 px-3 py-2 rounded block text-sm font-mono">pm2 logs aiswarm-microfish --lines 100</code>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 p-6 rounded-2xl mb-10">
+                        <h3 class="font-bold text-yellow-800 mb-3">Tips Penting Setelah Instalasi:</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-yellow-900">
+                            <li><strong>Ganti Port Default:</strong> Jika port 8000 sudah digunakan aplikasi lain, segera ganti di <code>main.py</code> dan restart PM2.</li>
+                            <li><strong>Keamanan API:</strong> Jangan pernah membagikan API Key Anda. Jika bocor, segera ganti di DeepSeek dashboard dan update server Anda.</li>
+                            <li><strong>Pembaruan Kode:</strong> Jika ada update di GitHub, lakukan <code>git pull</code>, lalu <code>pm2 restart aiswarm-microfish</code>.</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <!-- README PAGE -->
