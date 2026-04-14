@@ -40,7 +40,7 @@ class ChatRequest(BaseModel):
 @app.get("/")
 def home():
     # Mengambil file index.html dari folder parent
-    return FileResponse("../index.html")
+    return FileResponse("index.html")
 
 @app.post("/chat")
 async def chat_proxy(request: ChatRequest):
